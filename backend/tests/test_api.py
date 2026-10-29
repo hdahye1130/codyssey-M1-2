@@ -116,3 +116,28 @@ def test_copa_request(monkeypatch):
 
     monkeypatch.setattr(requests, "post", post)
     assert ask_copa("안녕하세요", [{"role": "assistant", "content": "이전 답변"}], "태양광 데이터") == "답변"
+
+
+def test_copa_http_errors_are_safe(tmp_path, monkeypatch, caplog):
+    import requests
+
+    db = LocalDemoStore(str(tmp_path / "errors.json"))
+    monkeypatch.setattr(main, "get_store", lambda: db)
+    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
+    client = TestClient(main.app)
+    for status, expected in [(401, "COPA_API_KEY"), (403, "403"), (404, "COPA_MODEL"), (429, "429"), (500, "실패")]:
+        response = requests.Response()
+        response.status_code = status
+        response._content = b'{"error":{"code":"secret-upstream-detail","message":"secret-virtual-key"}}'
+
+        def fail(*args):
+            response.raise_for_status()
+
+        monkeypatch.setattr(main, "ask_copa", fail)
+        result = client.post("/api/chat", json={"question": "평균은?"})
+        assert result.status_code == 503
+        assert expected in result.json()["detail"]
+        assert "secret-" not in result.text
+    assert "secret-" not in caplog.text
+    assert "status=401" in caplog.text
+    assert db.list_conversations() == []

@@ -3,15 +3,16 @@ services:
     name: solar-ai-assistant-api
     runtime: python
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: python seed_data.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && python seed_data.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
       - key: LOCAL_DEMO
         value: '0'
+      - key: COPA_MODEL
+        value: gpt-5-mini
       - key: COPA_API_KEY
         sync: false
       - key: FIREBASE_CREDENTIALS_JSON

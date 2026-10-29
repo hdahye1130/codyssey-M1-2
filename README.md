@@ -73,7 +73,7 @@ API는 `/health`와 `/docs`를 제외하고 `X-App-Token` 헤더로 접근 코�
 1. [Firebase Console](https://console.firebase.google.com/)에서 프로젝트 생성 → **Build → Firestore Database → Create database**를 선택합니다. 이 서버만 데이터에 접근하도록 Firestore 웹 클라이언트 직접 접근은 차단합니다.
 2. Firebase 프로젝트 설정(톱니바퀴) → **서비스 계정** → **새 비공개 키 생성**에서 JSON 키를 발급합니다. 키 파일을 GitHub나 채팅에 올리지 마세요.
 3. COPA에서 발급받은 **virtual key**를 `COPA_API_KEY`로 설정합니다. API 주소는 `https://copa.codyssey.kr/v1/chat/completions`입니다.
-4. [Render](https://dashboard.render.com/)에 GitHub 저장소를 연결해 Web Service를 생성하거나 이 폴더의 `render.yaml` Blueprint를 사용합니다. Blueprint `rootDir=backend`. 환경 변수는 `LOCAL_DEMO=0`, `COPA_API_KEY`, `FIREBASE_CREDENTIALS_JSON`(키 JSON 전체), `APP_ACCESS_TOKEN`(길고 임의적인 비밀번호), `ALLOWED_ORIGINS`(Vercel 배포 주소)를 설정합니다. Firestore 데이터가 비어 있으면 시작 시 `seed_data.py`가 누락된 CSV 행을 추가합니다. 이후 재시작에는 기존 수정값을 유지합니다.
+4. [Render](https://dashboard.render.com/)에 GitHub 저장소를 연결해 Web Service를 생성하거나 이 폴더의 `render.yaml` Blueprint를 사용합니다. Blueprint는 저장소 루트에서 실행하며 명령 안에서 `backend`로 이동합니다(CSV `data/` 포함). 환경 변수는 `LOCAL_DEMO=0`, `COPA_API_KEY`, `FIREBASE_CREDENTIALS_JSON`(키 JSON 전체), `APP_ACCESS_TOKEN`(길고 임의적인 비밀번호), `ALLOWED_ORIGINS`(Vercel 배포 주소)를 설정합니다. Firestore 데이터가 비어 있으면 시작 시 `seed_data.py`가 누락된 CSV 행을 추가합니다. 이후 재시작에는 기존 수정값을 유지합니다.
 5. Render에서 `https://<서비스명>.onrender.com/health`와 `https://<서비스명>.onrender.com/docs`를 확인합니다. 무료 인스턴스는 처음 요청에 지연이 발생할 수 있습니다.
 6. [Vercel](https://vercel.com/)에서 동일 GitHub 저장소를 가져오되 **Root Directory**를 `frontend`, Framework Preset은 `Other`, Build Command는 `npm run build`, Output Directory는 `dist`로 지정합니다. 환경 변수 `API_SERVER_URL`을 Render의 `https://...onrender.com` 주소로 설정합니다.
 7. Vercel URL을 Render의 `ALLOWED_ORIGINS`에 추가하고 재배포합니다. 웹의 **접근 코드** 칸에 `APP_ACCESS_TOKEN` 값을 넣으면 연결됩니다.
@@ -95,7 +95,7 @@ API는 `/health`와 `/docs`를 제외하고 `X-App-Token` 헤더로 접근 코�
 
 ## 테스트 및 과제 검증
 
-`cd backend && python -m pytest -q` — 샘플 CSV 101행 입력/중복 시드, 입력값 검증, CRUD, 요약, 대화 생성/조회/삭제, 채팅(mock AI), COPA 요청 형식·응답 처리, 접근코드 확인. 2026-10-29 Python 3.12.13 환경에서 **6 passed**를 확인했습니다. Starlette TestClient의 httpx 사용 중단 예고 경고 1건이 있으며 테스트 실패는 없습니다. 이 테스트는 외부 Firestore/COPA/Render/Vercel 실연동을 대신하지 않습니다.
+`cd backend && python -m pytest -q` — 샘플 CSV 101행 입력/중복 시드, 입력값 검증, CRUD, 요약, 대화 생성/조회/삭제, 채팅(mock AI), COPA 요청 형식·응답 처리, 접근코드 확인. 2026-10-29 Python 3.12.13 환경에서 **7 passed**를 확인했습니다. Starlette TestClient의 httpx 사용 중단 예고 경고 1건이 있으며 테스트 실패는 없습니다. 이 테스트는 외부 Firestore/COPA/Render/Vercel 실연동을 대신하지 않습니다.
 
 **제출 시 캡처해야 할 화면**: ① 데이터 요약과 AI 질문·실제 답변 ② 데이터 관리에서 추가/수정/삭제 중 1개 ③ 저장된 대화 불러오기 ④ Render `/docs` ⑤ Vercel 배포 화면. 실제로 배포 및 테스트한 뒤 캡처하세요.
 
@@ -120,5 +120,6 @@ API는 `/health`와 `/docs`를 제외하고 `X-App-Token` 헤더로 접근 코�
 - 실제 CSV 시드: 신규 365개 등록. 테스트에서 중복 시드 방지, CRUD, 요약, mock 채팅 및 대화 저장/조회/삭제, 접근 코드, `/docs`와 OpenAPI 응답 확인.
 - Node.js 22.16.0 임시 실행 환경으로 `npm run build` 성공, JavaScript 구문 검사 성공. 산출물 `dist` 및 가상환경은 Git에서 제외합니다.
 - 수정: CSV 탐색 시 현재 프로젝트 우선 선택, 한글 접근 코드 비교 시 서버 예외 방지.
-- GitHub: M1-2 원격 연결 및 로컬 main 커밋 완료. HTTPS Git 인증정보가 없어 push 실패(`could not read Username`). **GitHub 업로드 미완료**. VS Code의 소스 제어 → 변경 내용 게시/동기화에서 GitHub 로그인을 완료한 뒤 `git push -u origin main`을 실행하세요.
+- GitHub: M1-2의 기존 원격 커밋 3개와 로컬 COPA 전환 커밋을 merge로 통합했습니다. Render CSV 경로 및 Vercel 빌드 설정을 보존하고, COPA 오류 진단을 requests 응답에 맞게 수정했습니다.
+- 통합 후 백엔드 테스트: **7 passed, 1 warning**. 현재 실행 환경에 Node.js/npm이 없어 프론트 빌드는 재실행하지 못했습니다(위 성공 기록은 이전 검증 결과).
 - 실제 Firebase/COPA 인증정보가 제공되지 않아 실연동 및 Render/Vercel 배포는 미검증·미배포입니다. 브라우저 UI 실조작 및 제출 캡처도 남아 있습니다.

@@ -116,8 +116,39 @@ def chat(payload: ChatRequest, db=Depends(store)):
     try:
         answer = ask_copa(payload.question, history, context)
     except Exception as exc:
-        # Never disclose secrets, credentials, or COPA request internals in API responses.
-        raise HTTPException(status_code=503, detail="AI 호출에 실패했습니다. COPA API 키·사용 한도·서버 로그를 확인하세요.") from exc
+        # Log safe metadata only; never expose API keys or raw upstream response bodies.
+        import logging
+        response = getattr(exc, "response", None)
+        status = response.status_code if response is not None else None
+        body = None
+        if response is not None:
+            try:
+                error_payload = response.json()
+                body = error_payload.get("error") if isinstance(error_payload, dict) else None
+            except ValueError:
+                pass
+        error_code = body.get("code") if isinstance(body, dict) else None
+        if error_code not in {
+            "credit_balance_exhausted", "insufficient_quota",
+            "organization_usage_limit_exceeded", "organization_spend_limit_exceeded",
+            "project_spend_limit_exceeded", "model_not_found"
+        }:
+            error_code = "unspecified"
+        logging.getLogger("uvicorn.error").error(
+            "COPA call failed: error_type=%s status=%s code=%s",
+            type(exc).__name__, status, error_code
+        )
+        if status == 401:
+            detail = "COPA 인증 오류(401): Render의 COPA_API_KEY가 올바른지 확인하세요."
+        elif status == 429:
+            detail = "COPA 사용 제한(429): API 결제 잔액과 사용 한도를 확인하세요."
+        elif status == 403:
+            detail = "COPA 접근 제한(403): 프로젝트 및 모델 접근 권한을 확인하세요."
+        elif status == 404:
+            detail = "COPA 모델 오류(404): COPA_MODEL 설정을 확인하세요."
+        else:
+            detail = "AI 호출에 실패했습니다. Render 로그의 COPA 오류 유형과 상태 코드를 확인하세요."
+        raise HTTPException(status_code=503, detail=detail) from exc
     messages = (history + [{"role": "user", "content": payload.question},
                            {"role": "assistant", "content": answer}])[-30:]
     stamp = now()
