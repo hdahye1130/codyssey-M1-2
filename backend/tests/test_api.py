@@ -53,7 +53,7 @@ def test_seed_uses_original_csv(tmp_path):
 def test_crud_summary_conversations_chat(tmp_path, monkeypatch):
     db = LocalDemoStore(str(tmp_path / "store.json"))
     monkeypatch.setattr(main, "get_store", lambda: db)
-    monkeypatch.setattr(main, "ask_openai", lambda q, history, context: "확인된 데이터에 근거한 답변입니다.")
+    monkeypatch.setattr(main, "ask_copa", lambda q, history, context: "확인된 데이터에 근거한 답변입니다.")
     client = TestClient(main.app)
     assert client.get("/health").status_code == 200
     assert client.get("/docs").status_code == 200
@@ -83,3 +83,36 @@ def test_auth_required(tmp_path, monkeypatch):
     client = TestClient(main.app)
     assert client.get("/api/data").status_code == 401
     assert client.get("/api/data", headers={"X-App-Token": "test-secret"}).status_code == 200
+
+
+def test_copa_request(monkeypatch):
+    import requests
+    from app.service import ask_copa
+
+    monkeypatch.setenv("COPA_API_KEY", "test-virtual-key")
+    monkeypatch.delenv("COPA_MODEL", raising=False)
+    calls = []
+
+    class Response:
+        def raise_for_status(self):
+            calls.append("status_checked")
+
+        def json(self):
+            assert calls == ["status_checked"]
+            return {"choices": [{"message": {"content": " 답변 "}}]}
+
+    def post(url, *, headers, json, timeout):
+        assert url == "https://copa.codyssey.kr/v1/chat/completions"
+        assert headers == {"Authorization": "Bearer test-virtual-key"}
+        assert json["model"] == "gpt-5-mini"
+        assert json["messages"][0]["role"] == "system"
+        assert "태양광 데이터" in json["messages"][0]["content"]
+        assert json["messages"][1:] == [
+            {"role": "assistant", "content": "이전 답변"},
+            {"role": "user", "content": "안녕하세요"},
+        ]
+        assert timeout == 60
+        return Response()
+
+    monkeypatch.setattr(requests, "post", post)
+    assert ask_copa("안녕하세요", [{"role": "assistant", "content": "이전 답변"}], "태양광 데이터") == "답변"

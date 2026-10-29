@@ -8,7 +8,7 @@ from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from app.models import DataCreate, DataUpdate, ConversationCreate, ChatRequest
 from app.store import get_store, now
-from app.service import summarize, make_data_context, ask_openai
+from app.service import summarize, make_data_context, ask_copa
 
 load_dotenv()
 app = FastAPI(title="KPX Solar Data AI Assistant", version="1.0.0")
@@ -114,10 +114,10 @@ def chat(payload: ChatRequest, db=Depends(store)):
     stats = summarize(rows)
     context = make_data_context(stats, rows, payload.question)
     try:
-        answer = ask_openai(payload.question, history, context)
+        answer = ask_copa(payload.question, history, context)
     except Exception as exc:
-        # Never disclose secrets, credentials, or OpenAI request internals in API responses.
-        raise HTTPException(status_code=503, detail="AI 호출에 실패했습니다. OpenAI API 키·사용 한도·서버 로그를 확인하세요.") from exc
+        # Never disclose secrets, credentials, or COPA request internals in API responses.
+        raise HTTPException(status_code=503, detail="AI 호출에 실패했습니다. COPA API 키·사용 한도·서버 로그를 확인하세요.") from exc
     messages = (history + [{"role": "user", "content": payload.question},
                            {"role": "assistant", "content": answer}])[-30:]
     stamp = now()

@@ -49,11 +49,11 @@ def make_data_context(summary, records, question):
             + "\n질문에 등장하는 정확한 날짜의 기록: " + str(found))
 
 
-def ask_openai(question, history, context):
+def ask_copa(question, history, context):
     import os
-    from openai import OpenAI
-    if not os.environ.get("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
+    import requests
+    if not os.environ.get("COPA_API_KEY"):
+        raise RuntimeError("COPA_API_KEY 환경 변수가 설정되지 않았습니다.")
     system = (
         "당신은 한국 태양광 발전량 데이터 AI 비서입니다. 친절한 존댓말 한국어로 답변하세요. "
         "제공된 데이터 요약에 근거해 수치를 구체적으로 답하세요. 출처와 데이터 기간·MWh 단위를 구분하세요. "
@@ -62,10 +62,14 @@ def ask_openai(question, history, context):
         "전년 동기 등 데이터에 없는 값을 만들어내지 마세요.\n\n"
         "<DATA_CONTEXT>\n" + context + "\n</DATA_CONTEXT>"
     )
-    response = OpenAI().chat.completions.create(
-        model=os.environ.get("OPENAI_MODEL", "gpt-4.1-mini"),
-        messages=[{"role": "system", "content": system}] + history[-12:] + [{"role": "user", "content": question}],
-        temperature=0.2,
-        max_tokens=700,
+    response = requests.post(
+        "https://copa.codyssey.kr/v1/chat/completions",
+        headers={"Authorization": f"Bearer {os.environ['COPA_API_KEY']}"},
+        json={
+            "model": os.environ.get("COPA_MODEL", "gpt-5-mini"),
+            "messages": [{"role": "system", "content": system}] + history[-12:] + [{"role": "user", "content": question}],
+        },
+        timeout=60,
     )
-    return (response.choices[0].message.content or "응답 내용이 비어 있습니다.").strip()
+    response.raise_for_status()
+    return (response.json()["choices"][0]["message"]["content"] or "응답 내용이 비어 있습니다.").strip()
