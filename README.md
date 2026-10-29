@@ -120,5 +120,5 @@ API는 `/health`와 `/docs`를 제외하고 `X-App-Token` 헤더로 접근 코�
 - 실제 CSV 시드: 신규 365개 등록. 테스트에서 중복 시드 방지, CRUD, 요약, mock 채팅 및 대화 저장/조회/삭제, 접근 코드, `/docs`와 OpenAPI 응답 확인.
 - Node.js 22.16.0 임시 실행 환경으로 `npm run build` 성공, JavaScript 구문 검사 성공. 산출물 `dist` 및 가상환경은 Git에서 제외합니다.
 - 수정: CSV 탐색 시 현재 프로젝트 우선 선택, 한글 접근 코드 비교 시 서버 예외 방지.
-- GitHub: M1-2 원격 연결 및 로컬 main 커밋 준비 완료, push 결과 확인 대기.
+- GitHub: M1-2 원격 연결 및 로컬 main 커밋 완료. HTTPS Git 인증정보가 없어 push 실패(`could not read Username`). **GitHub 업로드 미완료**. VS Code의 소스 제어 → 변경 내용 게시/동기화에서 GitHub 로그인을 완료한 뒤 `git push -u origin main`을 실행하세요.
 - 실제 Firebase/OpenAI 인증정보가 제공되지 않아 실연동 및 Render/Vercel 배포는 미검증·미배포입니다. 브라우저 UI 실조작 및 제출 캡처도 남아 있습니다.
