@@ -1,0 +1,17 @@
+# Local secrets and runtime files (never commit)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*service*account*.json
+*firebase*key*.json
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+.local/
+dist/
+node_modules/
+.DS_Store

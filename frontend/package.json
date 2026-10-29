@@ -1,0 +1,1 @@
+{"private":true,"name":"solar-ai-assistant-web","version":"1.0.0","scripts":{"build":"node build.mjs"}}

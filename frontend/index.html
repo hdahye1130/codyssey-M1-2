@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>솔라 인사이트 — 데이터 AI 비서</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><div class="sun">☀</div><div><strong>솔라 인사이트</strong><small>KPX 데이터 AI 비서</small></div></div>
+      <div class="tag">2025 · 한국 태양광 전력거래 데이터</div>
+      <nav aria-label="화면 선택">
+        <button class="nav active" data-tab="chat">◈ <span>AI 대화</span></button>
+        <button class="nav" data-tab="data">▦ <span>데이터 관리</span></button>
+        <button class="nav" data-tab="history">▤ <span>대화 기록</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <label for="token">접근 코드 (서버에 설정한 APP_ACCESS_TOKEN)</label>
+        <input type="password" id="token" placeholder="접근 코드를 입력하세요" autocomplete="off" />
+        <button id="save-token" class="quiet">코드 적용 및 연결 확인</button>
+        <div class="conn" id="connection">● 연결 확인 전</div>
+        <p>접근 코드는 이 브라우저 탭에서만 보관합니다.</p>
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div><p class="eyebrow">SOLAR DATA ASSISTANT</p><h1>발전량 데이터에게 물어보세요</h1><p class="muted">첫 번째 M1-1 시계열 분석 과제를 바탕으로 한 데이터 기반 AI 비서</p></div>
+        <span class="source">자료: KPX · 2025</span>
+      </header>
+      <div id="notice" role="status" class="notice" hidden></div>
+      <section id="stats" class="stats" aria-label="데이터 요약">
+        <article><span>관측 데이터</span><strong id="stat-count">—</strong><small>일별 관측값</small></article>
+        <article><span>평균 일별 거래량</span><strong id="stat-avg">—</strong><small>MWh/일</small></article>
+        <article><span>최대 일별 거래량</span><strong id="stat-max">—</strong><small id="stat-max-date">MWh</small></article>
+        <article><span>최근 7일 흐름</span><strong id="stat-trend">—</strong><small>직전 7일 평균 대비</small></article>
+      </section>
+      <section id="tab-chat" class="page">
+        <div class="panel chat-panel">
+          <div class="panel-heading"><div><h2>AI 분석 대화</h2><p>관측된 수치와 가능한 해석을 구분해 답변합니다.</p></div><button id="new-chat" class="outline">＋ 새 대화</button></div>
+          <div id="messages" class="messages" aria-live="polite"><div class="intro"><div class="big-sun">☀</div><h3>태양광 데이터에 대해 궁금한 점이 있으신가요?</h3><p>2025년 태양광 발전량의 추세, 최고·최저 시기, 평균 등을 질문할 수 있습니다.</p></div></div>
+          <div class="prompt-chips"><button class="suggest">2025년 일별 평균 발전량은 얼마인가요?</button><button class="suggest">월별 거래량은 어떻게 달라졌나요?</button><button class="suggest">가장 거래량이 많았던 날짜는 언제인가요?</button></div>
+          <form id="chat-form" class="chat-input"><textarea id="question" rows="2" placeholder="태양광 발전량에 대해 질문하세요" required></textarea><button type="submit" id="ask">질문하기 ↗</button></form>
+          <p class="footnote">AI 답변은 보유한 데이터에 근거하며 외부 요인의 인과관계를 입증하지 않습니다.</p>
+        </div>
+      </section>
+      <section id="tab-data" class="page" hidden>
+        <div class="panel">
+          <div class="panel-heading"><div><h2>발전량 데이터 관리</h2><p>날짜별 값과 메모를 추가·수정·삭제할 수 있습니다.</p></div><button id="reload-data" class="outline">새로고침</button></div>
+          <form id="data-form" class="data-form"><label>날짜<input type="date" id="date" required /></label><label>거래량 (MWh)<input type="number" min="0" step="any" id="value" required /></label><label>메모<input type="text" maxlength="500" id="memo" placeholder="메모 (선택)" /></label><button type="submit">추가하기</button></form>
+          <p class="hint">기존 데이터의 수정은 목록에서 「수정」을 누르세요. 날짜를 변경하려면 삭제 후 다시 추가합니다.</p>
+          <div class="table-shell"><table><thead><tr><th>날짜</th><th>거래량 (MWh)</th><th>출처·메모</th><th>작업</th></tr></thead><tbody id="data-body"><tr><td colspan="4">목록을 불러오려면 연결하세요.</td></tr></tbody></table></div>
+          <div class="pager"><button id="prev-data" class="outline">이전</button><span id="data-page">—</span><button id="next-data" class="outline">다음</button></div>
+        </div>
+      </section>
+      <section id="tab-history" class="page" hidden>
+        <div class="panel"><div class="panel-heading"><div><h2>저장한 대화</h2><p>대화를 선택하면 채팅 화면에서 이어서 질문할 수 있습니다.</p></div><button id="reload-history" class="outline">새로고침</button></div><div id="history-items" class="history-items">대화 기록이 없습니다.</div></div>
+      </section>
+      <footer>데이터: 한국전력거래소(KPX) · 전력시장 참여 설비의 거래량만 포함 · <a href="https://www.data.go.kr/data/15065269/fileData.do" target="_blank" rel="noopener">원본 출처</a></footer>
+    </main>
+  </div>
+  <script src="/config.js"></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>

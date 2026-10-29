@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: solar-ai-assistant-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python seed_data.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: LOCAL_DEMO
+        value: '0'
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FIREBASE_CREDENTIALS_JSON
+        sync: false
+      - key: APP_ACCESS_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
